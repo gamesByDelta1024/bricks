@@ -14,12 +14,18 @@ const Bullet = struct {
     pos: Vector2,
     active: bool = false,
 };
-const MAX_BULLETS: usize = 16;
+const MAX_BULLETS: usize = 8;
 const FPS: i32 = 60;
 pub fn main() !void {
     const screen = struct {
         pub const width: i32 = 800;
         pub const height: i32 = 450;
+    };
+    const message = "Bullets: {d}/8";
+    const message_buff = blk: {
+        const bufflen = std.fmt.count(message, .{MAX_BULLETS}) + 1;
+        const buf = try std.heap.page_allocator.alloc(u8, @intCast(bufflen));
+        break :blk buf;
     };
     var bullets: [MAX_BULLETS]Bullet = [_]Bullet{.{ .pos = .{ 0, 0 } }} ** MAX_BULLETS;
     var bullet_count: usize = 0;
@@ -75,5 +81,7 @@ pub fn main() !void {
         for (bullets) |bullet|
             if (bullet.active)
                 raylib.drawRectangleV(bullet.pos, .{ 8, 8 }, Red);
+
+        raylib.drawText(try std.fmt.bufPrintZ(message_buff, message, .{MAX_BULLETS - bullet_count}), 6, 6, 24, raylib.colors.Black);
     }
 }
