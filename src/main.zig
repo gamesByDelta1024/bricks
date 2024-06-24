@@ -49,9 +49,13 @@ pub fn main() !void {
         .speed = 7,
     };
     const bullet_speed: f32 = 4;
+    const brick_speed: f32 = 2;
+
     raylib.initWindow(screen.width, screen.height, NAME);
     defer raylib.closeWindow();
     raylib.setTargetFps(FPS);
+    const background = raylib.loadRenderTexture(screen.width, screen.height);
+    defer raylib.unloadRenderTexture(background);
     var frame: i32 = 0;
     var tick: i32 = 0;
     while (!raylib.windowShouldClose()) : (frame += 1) {
@@ -100,7 +104,7 @@ pub fn main() !void {
             for (&bricks) |*brick| {
                 if (!brick.active)
                     continue;
-                brick.pos[1] += 2;
+                brick.pos[1] += brick_speed;
             }
         }
         // bullet movement
@@ -108,17 +112,32 @@ pub fn main() !void {
             if (bullet.active)
                 bullet.pos[1] -= bullet_speed;
         }
+
+        raylib.beginTextureMode(background);
+        {
+            defer raylib.endTextureMode();
+
+            raylib.clearBackground(raylib.colors.Blank);
+            raylib.drawRectangleV(player.pos, player.size, Red);
+
+            for (bullets) |bullet|
+                if (bullet.active)
+                    raylib.drawRectangleV(bullet.pos, .{ 8, 8 }, Red);
+            for (bricks) |brick|
+                if (brick.active)
+                    raylib.drawRectangleV(brick.pos, .{ 32, 32 }, raylib.colors.Blue);
+
+            raylib.drawText(try std.fmt.bufPrintZ(message_buff, message, .{MAX_BULLETS - bullet_count}), 6, 6, 24, raylib.colors.Black);
+        }
+
         raylib.beginDrawing();
         defer raylib.endDrawing();
         raylib.clearBackground(raylib.colors.RayWhite);
-        raylib.drawRectangleV(player.pos, player.size, Red);
-        for (bullets) |bullet|
-            if (bullet.active)
-                raylib.drawRectangleV(bullet.pos, .{ 8, 8 }, Red);
-        for (bricks) |brick|
-            if (brick.active)
-                raylib.drawRectangleV(brick.pos, .{ 32, 32 }, raylib.colors.Blue);
-
-        raylib.drawText(try std.fmt.bufPrintZ(message_buff, message, .{MAX_BULLETS - bullet_count}), 6, 6, 24, raylib.colors.Black);
+        raylib.drawTextureRec(background.texture, .{
+            .x = 0,
+            .y = 0,
+            .width = screen.width,
+            .height = -screen.height,
+        }, .{ 0, 0 }, raylib.colors.RayWhite);
     }
 }
