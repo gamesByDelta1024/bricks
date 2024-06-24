@@ -13,10 +13,12 @@ const Player = struct {
 const Bullet = struct {
     pos: Vector2,
     active: bool = false,
+    hit: bool = false,
 };
 const Brick = struct {
     pos: Vector2,
     active: bool = false,
+    hit: bool = false,
 };
 const MAX_BULLETS: usize = 8;
 const MAX_BRICKS: usize = 3;
@@ -28,6 +30,8 @@ pub fn main() !void {
     };
 
     const message = "Bullets: {d}/8";
+    var score_buff: [256]u8 = [_]u8{0} ** 256;
+    var score: i32 = 0;
     const message_buff = blk: {
         const bufflen = std.fmt.count(message, .{MAX_BULLETS}) + 1;
         const buf = try std.heap.page_allocator.alloc(u8, @intCast(bufflen));
@@ -72,6 +76,21 @@ pub fn main() !void {
                 bullet_count -= 1;
             }
         }
+        for (&bullets) |*bullet| {
+            if (bullet.active and bullet.hit) {
+                bullet.active = false;
+                bullet.hit = false;
+                bullet_count -= 1;
+            }
+        }
+        for (&bricks) |*brick| {
+            if (brick.active and brick.hit) {
+                brick.active = false;
+                brick.hit = false;
+                score += 5;
+            }
+        }
+        // Remove hit objects
         // Player Input
         if (raylib.isKeyDown(.Right))
             player.pos[0] += player.speed;
@@ -113,6 +132,32 @@ pub fn main() !void {
                 bullet.pos[1] -= bullet_speed;
         }
 
+        // Check for collisions
+        collision: for (&bricks) |*brick| {
+            if (!brick.active)
+                continue :collision;
+            const brick_rec: Rectangle = .{
+                .x = brick.pos[0],
+                .y = brick.pos[1],
+                .height = 32,
+                .width = 32,
+            };
+            bullet: for (&bullets) |*bullet| {
+                if (!bullet.active)
+                    continue :bullet;
+                const bullet_rec: Rectangle = .{
+                    .x = bullet.pos[0],
+                    .y = bullet.pos[1],
+                    .width = 8,
+                    .height = 8,
+                };
+                if (raylib.checkCollisionRecs(brick_rec, bullet_rec)) {
+                    brick.hit = true;
+                    bullet.hit = true;
+                }
+            }
+        }
+        // Render objects
         raylib.beginTextureMode(background);
         {
             defer raylib.endTextureMode();
@@ -128,6 +173,7 @@ pub fn main() !void {
                     raylib.drawRectangleV(brick.pos, .{ 32, 32 }, raylib.colors.Blue);
 
             raylib.drawText(try std.fmt.bufPrintZ(message_buff, message, .{MAX_BULLETS - bullet_count}), 6, 6, 24, raylib.colors.Black);
+            raylib.drawText(try std.fmt.bufPrintZ(&score_buff, "Score: {d}", .{score}), 6, 30, 24, raylib.colors.Black);
         }
 
         raylib.beginDrawing();
