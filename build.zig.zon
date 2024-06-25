@@ -24,8 +24,7 @@
     // internet connectivity.
     .dependencies = .{
         .raylib = .{
-            .url = "../zraylib/raylib.tar.gz",
-            .hash = "1220fc1b090f0177d095e96a02b52949620b8980ae952723b911e9a3c827e78d8f7f",
+            .path = "zraylib",
         },
     },
     .paths = .{
