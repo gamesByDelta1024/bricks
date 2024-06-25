@@ -63,116 +63,125 @@ pub fn main() !void {
     defer raylib.unloadRenderTexture(background);
     var frame: i32 = 0;
     var tick: i32 = 0;
+    var mode: enum {
+        play,
+        game_over,
+    } = .play;
     while (!raylib.windowShouldClose()) : (frame += 1) {
-        if (!state.game_over) {
-            if (@mod(frame, FPS) == 0)
-                tick += 1;
-            // out of bounds check
-            for (&state.bullets) |*bullet| {
-                const min_out: Vector2 = .{ 0, 0 };
-                const max_out: Vector2 = .{ screen.width, screen.height };
-                const min_ck = bullet.pos < min_out;
-                const max_ck = bullet.pos > max_out;
-                if (bullet.active and (min_ck[0] or min_ck[1] or max_ck[0] or max_ck[1])) {
-                    bullet.active = false;
-                    state.bullet_count -= 1;
-                }
-            }
-
-            // Remove hit objects
-            for (&state.bullets) |*bullet| {
-                if (bullet.active and bullet.hit) {
-                    bullet.active = false;
-                    bullet.hit = false;
-                    state.bullet_count -= 1;
-                }
-            }
-            for (&state.bricks) |*brick| {
-                if (brick.active and brick.hit) {
-                    brick.active = false;
-                    brick.hit = false;
-                    state.score += 5;
-                }
-            }
-
-            // Player Input
-            if (raylib.isKeyDown(.Right))
-                state.player.pos[0] += state.player.speed;
-            if (raylib.isKeyDown(.Left))
-                state.player.pos[0] -= state.player.speed;
-            if (raylib.isKeyPressed(.Space) and state.bullet_count < MAX_BULLETS) {
-                const bullet_start_pos: Vector2 = .{ state.player.pos[0] + 4, state.player.pos[1] - 4 };
-                bullet: for (&state.bullets) |*bullet| {
-                    if (bullet.active)
-                        continue;
-                    bullet.active = true;
-                    state.bullet_count += 1;
-                    bullet.pos = bullet_start_pos;
-                    break :bullet;
-                }
-            }
-            // spawn bricks
-            if (tick > 0 and @mod(tick, 3) == 0) {
-                tick = 0;
-                find_inactive: for (&state.bricks) |*brick| {
-                    if (brick.active)
-                        continue;
-                    brick.active = true;
-                    brick.pos = .{ @floatFromInt(raylib.getRandomValue(0, screen.width)), 0 };
-                    break :find_inactive;
-                }
-            }
-            // brick movement
-            if (@mod(frame, 10) == 0) {
-                for (&state.bricks) |*brick| {
-                    if (!brick.active)
-                        continue;
-                    brick.pos[1] += brick_speed;
-                }
-            }
-            // bullet movement
-            for (&state.bullets) |*bullet| {
-                if (bullet.active)
-                    bullet.pos[1] -= bullet_speed;
-            }
-
-            // Check for collisions
-            collision: for (&state.bricks) |*brick| {
-                if (!brick.active)
-                    continue :collision;
-                const brick_rec: Rectangle = .{
-                    .x = brick.pos[0],
-                    .y = brick.pos[1],
-                    .height = 32,
-                    .width = 32,
-                };
-                bullet: for (&state.bullets) |*bullet| {
-                    if (!bullet.active)
-                        continue :bullet;
-                    const bullet_rec: Rectangle = .{
-                        .x = bullet.pos[0],
-                        .y = bullet.pos[1],
-                        .width = 8,
-                        .height = 8,
-                    };
-                    if (raylib.checkCollisionRecs(brick_rec, bullet_rec)) {
-                        brick.hit = true;
-                        bullet.hit = true;
+        switch (mode) {
+            .play => {
+                if (@mod(frame, FPS) == 0)
+                    tick += 1;
+                // out of bounds check
+                for (&state.bullets) |*bullet| {
+                    const min_out: Vector2 = .{ 0, 0 };
+                    const max_out: Vector2 = .{ screen.width, screen.height };
+                    const min_ck = bullet.pos < min_out;
+                    const max_ck = bullet.pos > max_out;
+                    if (bullet.active and (min_ck[0] or min_ck[1] or max_ck[0] or max_ck[1])) {
+                        bullet.active = false;
+                        state.bullet_count -= 1;
                     }
                 }
-                if (brick.hit)
-                    continue :collision;
-                if (brick.pos[1] + 32 > screen.height)
-                    state.game_over = true;
-            }
+
+                // Remove hit objects
+                for (&state.bullets) |*bullet| {
+                    if (bullet.active and bullet.hit) {
+                        bullet.active = false;
+                        bullet.hit = false;
+                        state.bullet_count -= 1;
+                    }
+                }
+                for (&state.bricks) |*brick| {
+                    if (brick.active and brick.hit) {
+                        brick.active = false;
+                        brick.hit = false;
+                        state.score += 5;
+                    }
+                }
+
+                // Player Input
+                if (raylib.isKeyDown(.Right))
+                    state.player.pos[0] += state.player.speed;
+                if (raylib.isKeyDown(.Left))
+                    state.player.pos[0] -= state.player.speed;
+                if (raylib.isKeyPressed(.Space) and state.bullet_count < MAX_BULLETS) {
+                    const bullet_start_pos: Vector2 = .{ state.player.pos[0] + 4, state.player.pos[1] - 4 };
+                    bullet: for (&state.bullets) |*bullet| {
+                        if (bullet.active)
+                            continue;
+                        bullet.active = true;
+                        state.bullet_count += 1;
+                        bullet.pos = bullet_start_pos;
+                        break :bullet;
+                    }
+                }
+                // spawn bricks
+                if (tick > 0 and @mod(tick, 3) == 0) {
+                    tick = 0;
+                    find_inactive: for (&state.bricks) |*brick| {
+                        if (brick.active)
+                            continue;
+                        brick.active = true;
+                        brick.pos = .{ @floatFromInt(raylib.getRandomValue(0, screen.width)), 0 };
+                        break :find_inactive;
+                    }
+                }
+                // brick movement
+                if (@mod(frame, 10) == 0) {
+                    for (&state.bricks) |*brick| {
+                        if (!brick.active)
+                            continue;
+                        brick.pos[1] += brick_speed;
+                    }
+                }
+                // bullet movement
+                for (&state.bullets) |*bullet| {
+                    if (bullet.active)
+                        bullet.pos[1] -= bullet_speed;
+                }
+
+                // Check for collisions
+                collision: for (&state.bricks) |*brick| {
+                    if (!brick.active)
+                        continue :collision;
+                    const brick_rec: Rectangle = .{
+                        .x = brick.pos[0],
+                        .y = brick.pos[1],
+                        .height = 32,
+                        .width = 32,
+                    };
+                    bullet: for (&state.bullets) |*bullet| {
+                        if (!bullet.active)
+                            continue :bullet;
+                        const bullet_rec: Rectangle = .{
+                            .x = bullet.pos[0],
+                            .y = bullet.pos[1],
+                            .width = 8,
+                            .height = 8,
+                        };
+                        if (raylib.checkCollisionRecs(brick_rec, bullet_rec)) {
+                            brick.hit = true;
+                            bullet.hit = true;
+                        }
+                    }
+                    if (brick.hit)
+                        continue :collision;
+                    if (brick.pos[1] + 32 > screen.height)
+                        mode = .game_over;
+                }
+            },
+            .game_over => {
+                // Reset game
+                if (raylib.isKeyPressed(.Space)) {
+                    state = .{};
+                    mode = .play;
+                }
+            },
         }
 
-        // Reset game
-        if (state.game_over and raylib.isKeyPressed(.Space))
-            state = .{};
-
         // Render objects
-        if (!state.game_over) {
+        if (mode == .play) {
             raylib.beginTextureMode(background);
             defer raylib.endTextureMode();
 
@@ -199,7 +208,8 @@ pub fn main() !void {
             .width = screen.width,
             .height = -screen.height,
         }, .{ 0, 0 }, raylib.colors.RayWhite);
-        if (state.game_over) {
+
+        if (mode == .game_over) {
             raylib.drawText("GAME OVER", (screen.width / 2) - (24 * 4), (screen.height / 2) - 12, 24, Red);
         }
     }
