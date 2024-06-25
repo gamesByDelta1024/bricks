@@ -31,12 +31,11 @@ pub fn main() !void {
 
     const message = "Bullets: {d}/8";
     var score_buff: [256]u8 = [_]u8{0} ** 256;
-    const message_buff = blk: {
+    var message_buff = comptime blk: {
         const bufflen = std.fmt.count(message, .{MAX_BULLETS}) + 1;
-        const buf = try std.heap.page_allocator.alloc(u8, @intCast(bufflen));
+        const buf = [_]u8{0} ** bufflen;
         break :blk buf;
     };
-    defer std.heap.page_allocator.free(message_buff);
     var state: struct {
         score: i32 = 0,
         game_over: bool = false,
@@ -195,7 +194,7 @@ pub fn main() !void {
                 if (brick.active)
                     raylib.drawRectangleV(brick.pos, .{ 32, 32 }, raylib.colors.Blue);
 
-            raylib.drawText(try std.fmt.bufPrintZ(message_buff, message, .{MAX_BULLETS - state.bullet_count}), 6, 6, 24, raylib.colors.Black);
+            raylib.drawText(try std.fmt.bufPrintZ(&message_buff, message, .{MAX_BULLETS - state.bullet_count}), 6, 6, 24, raylib.colors.Black);
             raylib.drawText(try std.fmt.bufPrintZ(&score_buff, "Score: {d}", .{state.score}), 6, 30, 24, raylib.colors.Black);
         }
 
