@@ -58,14 +58,12 @@ pub fn main() !void {
     raylib.initWindow(screen.width, screen.height, NAME);
     defer raylib.closeWindow();
     raylib.setTargetFps(FPS);
-    raylib.setExitKey(.Null);
     const background = raylib.loadRenderTexture(screen.width, screen.height);
     defer raylib.unloadRenderTexture(background);
     var frame: i32 = 0;
     var tick: i32 = 0;
     var mode: enum {
         play,
-        pause,
         game_over,
     } = .play;
     while (!raylib.windowShouldClose()) : (frame += 1) {
@@ -101,11 +99,7 @@ pub fn main() !void {
                     }
                 }
 
-                std.debug.print("{d}\n", .{@as(c_int, @intFromEnum(raylib.KeyboardKey.Q))});
-                // if (raylib.isKeyPressed(.P)) {
-                //     raylib.setExitKey(.Q);
-                //     mode = .pause;
-                // }
+                // Player Input
                 if (raylib.isKeyDown(.Right))
                     state.player.pos[0] += state.player.speed;
                 if (raylib.isKeyDown(.Left))
@@ -183,17 +177,6 @@ pub fn main() !void {
                     mode = .play;
                 }
             },
-            .pause => {
-                if (raylib.isKeyPressed(.R)) {
-                    raylib.setExitKey(.Null);
-                    state = .{};
-                    mode = .play;
-                }
-                if (raylib.isKeyPressed(.Space)) {
-                    raylib.setExitKey(.Null);
-                    mode = .play;
-                }
-            },
         }
 
         // Render objects
@@ -227,12 +210,6 @@ pub fn main() !void {
 
         if (mode == .game_over) {
             raylib.drawText("GAME OVER", (screen.width / 2) - (24 * 4), (screen.height / 2) - 12, 24, Red);
-        }
-        if (mode == .pause) {
-            raylib.drawText("GAME PAUSED", (screen.width / 2) - (24 * 5), (screen.height / 2) - 12, 24, Red);
-            raylib.drawText("SPACE: Resume", 6, 54, 24, raylib.colors.Black);
-            raylib.drawText("Q: quit", 6, 78, 24, raylib.colors.Black);
-            raylib.drawText("R: restart", 6, 102, 24, raylib.colors.Black);
         }
     }
 }
