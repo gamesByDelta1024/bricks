@@ -58,6 +58,7 @@ pub fn main() !void {
     raylib.initWindow(screen.width, screen.height, NAME);
     defer raylib.closeWindow();
     raylib.setTargetFps(FPS);
+    raylib.setExitKey(.Null);
     const background = raylib.loadRenderTexture(screen.width, screen.height);
     defer raylib.unloadRenderTexture(background);
     var frame: i32 = 0;
@@ -65,6 +66,7 @@ pub fn main() !void {
     var mode: enum {
         play,
         game_over,
+        paused,
     } = .play;
     while (!raylib.windowShouldClose()) : (frame += 1) {
         switch (mode) {
@@ -100,6 +102,11 @@ pub fn main() !void {
                 }
 
                 // Player Input
+                if (raylib.isKeyPressed(.P)) {
+                    raylib.setExitKey(.Q);
+                    mode = .paused;
+                    continue;
+                }
                 if (raylib.isKeyDown(.Right))
                     state.player.pos[0] += state.player.speed;
                 if (raylib.isKeyDown(.Left))
@@ -177,6 +184,17 @@ pub fn main() !void {
                     mode = .play;
                 }
             },
+            .paused => {
+                if (raylib.isKeyPressed(.R)) {
+                    raylib.setExitKey(.Null);
+                    mode = .play;
+                    state = .{};
+                }
+                if (raylib.isKeyPressed(.Space)) {
+                    raylib.setExitKey(.Null);
+                    mode = .play;
+                }
+            },
         }
 
         // Render objects
@@ -207,9 +225,15 @@ pub fn main() !void {
             .width = screen.width,
             .height = -screen.height,
         }, .{ 0, 0 }, raylib.colors.RayWhite);
-
-        if (mode == .game_over) {
-            raylib.drawText("GAME OVER", (screen.width / 2) - (24 * 4), (screen.height / 2) - 12, 24, Red);
+        switch (mode) {
+            .game_over => raylib.drawText("GAME OVER", (screen.width / 2) - (24 * 4), (screen.height / 2) - 12, 24, Red),
+            .paused => {
+                raylib.drawText("GAME PAUSED", (screen.width / 2) - (24 * 5), (screen.height / 2) - 12, 24, Red);
+                raylib.drawText("Resume: space", 6, 54, 24, raylib.colors.Black);
+                raylib.drawText("Restart: r", 6, 78, 24, raylib.colors.Black);
+                raylib.drawText("Exit: q", 6, 102, 24, raylib.colors.Black);
+            },
+            else => {},
         }
     }
 }
