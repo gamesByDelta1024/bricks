@@ -229,11 +229,14 @@ pub fn main() !void {
             .game_over => raylib.drawText("GAME OVER", (screen.width / 2) - (24 * 4), (screen.height / 2) - 12, 24, Red),
             .paused => {
                 raylib.drawText("GAME PAUSED", (screen.width / 2) - (24 * 5), (screen.height / 2) - 12, 24, Red);
-                raylib.drawText("Resume: space", 6, 54, 24, raylib.colors.Black);
-                raylib.drawText("Restart: r", 6, 78, 24, raylib.colors.Black);
-                raylib.drawText("Exit: q", 6, 102, 24, raylib.colors.Black);
+                raylib.drawText("Resume: Space", 6, 54, 24, raylib.colors.Black);
+                raylib.drawText("Restart: R", 6, 78, 24, raylib.colors.Black);
+                raylib.drawText("Exit: Q", 6, 102, 24, raylib.colors.Black);
             },
-            else => {},
+            .play => {
+                raylib.drawText("Move: <- ->", 6, 54, 24, raylib.colors.Black);
+                raylib.drawText("Fire: Space", 6, 78, 24, raylib.colors.Black);
+            },
         }
     }
 }
